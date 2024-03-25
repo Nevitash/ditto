@@ -8,8 +8,7 @@ async fn main() {
     let password = "os";
     let port = 5432;
     let database = "ditto";
-    let connection_string = datasource::generate_connection_string(url, port, user_name, password, database)
-        .unwrap();
+    let connection_string = datasource::generate_connection_string(url, port, Some(user_name), Some(password), Some(database));
     let pool = datasource::connect(&connection_string)
         .await
         .expect("No connection could be established");
