@@ -1,19 +1,17 @@
-use cdrs::authenticators::NoneAuthenticator;
-use cdrs::cluster::session::new as new_session;
-use cdrs::cluster::{ClusterTcpConfig, NodeTcpConfigBuilder};
-use cdrs::load_balancing::RoundRobin;
-use cdrs::query::QueryExecutor;
+mod datasource;
 
 #[tokio::main]
 async fn main() {
-    let node = NodeTcpConfigBuilder::new("cassandra:9042", NoneAuthenticator {}).build();
-    let cluster_config = ClusterTcpConfig(vec![node]);
-    let no_compression =
-        new_session(&cluster_config, RoundRobin::new()).expect("session should be created");
-    let create_ks: &'static str = "CREATE KEYSPACE IF NOT EXISTS test_ks WITH REPLICATION = { \
-            'class' : 'SimpleStrategy', 'replication_factor' : 1 };";
-    match no_compression.query(create_ks) {
-        Ok(_) => println!("Keyspace created successfully"),
-        Err(e) => println!("Keyspace creation error: {:?}", e),
-    }
+    sqlx::any::install_default_drivers();
+    let url: &str = "postgres";
+    let user_name = "os";
+    let password = "os";
+    let port = 5432;
+    let database = "ditto";
+    let connection_string = datasource::generate_connection_string(url, port, user_name, password, database)
+        .unwrap();
+    let pool = datasource::connect(&connection_string)
+        .await
+        .expect("No connection could be established");
+    datasource::init(&pool).await.expect("Init failed.");
 }
