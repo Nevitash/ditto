@@ -8,5 +8,4 @@ CREATE TABLE steps (
   state_id uuid REFERENCES states(id)  -- Optional: State within this step (pending, processing, done, error)
 );
 
-CREATE INDEX idx_message_step_message ON message_steps(message_id);  -- Index for faster message step lookup
 CREATE INDEX idx_step_message_step_number ON steps(message_id, step_number);  -- Combined index

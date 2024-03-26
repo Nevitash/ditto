@@ -1,4 +1,7 @@
+use std::path::Path;
+
 mod datasource;
+extern crate derive_builder;
 
 #[tokio::main]
 async fn main() {
@@ -13,4 +16,5 @@ async fn main() {
         .await
         .expect("No connection could be established");
     datasource::init(&pool).await.expect("Init failed.");
+    datasource::migrate(&pool, Path::new("src/files/db/migrations")).await.unwrap_err();
 }
