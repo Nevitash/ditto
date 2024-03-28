@@ -5,16 +5,7 @@ pub trait Entity {
 }
 
 pub async fn connect(url: &String) -> Result<PgPool, Error> {
-    match PgPool::connect(url).await {
-        Ok(pool) => {
-            println!("Successfully connected to the database.");
-            return Ok(pool);
-        }
-        Err(e) => {
-            println!("Failed to connect to the database. Error: {}", e);
-            return Err(e);
-        }
-    }
+    PgPool::connect(url).await
 }
 
 pub fn generate_connection_string(

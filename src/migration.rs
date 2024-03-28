@@ -5,6 +5,7 @@ use std::{
 };
 
 use derive_builder::Builder;
+use log::{debug, info, trace};
 use sqlx::{query_as, Error, PgPool};
 use tokio::try_join;
 use uuid::Uuid;
@@ -89,6 +90,7 @@ pub async fn enable_uuid_plugins(pool: &PgPool) -> Result<(), sqlx::Error> {
         eprintln!("Failed to enable plugins. Error: {}", e);
         e
     })?;
+    debug!("DB extensions pgcrypto and uuid-ossp enabled");
 
     Ok(())
 }
@@ -100,10 +102,14 @@ pub async fn init(pool: &PgPool) -> Result<(), Error> {
         .await?;
 
     if table_exists == 0 {
+        debug!("Migration table doesn't exist. It will be created.");
         sqlx::query(MIGRATION_TABLE_CREATE_QUERY)
             .execute(pool)
             .await?;
+        debug!("Migration table created");
+        return Ok(());
     }
+    debug!("Migration table already exists");
 
     Ok(())
 }
@@ -111,9 +117,9 @@ pub async fn init(pool: &PgPool) -> Result<(), Error> {
 pub async fn migrate(pool: &PgPool, directory: &Path) -> Result<(), MigrationError> {
     let sql_files = get_sql_files(directory)?;
     if sql_files.is_empty() {
+        debug!("No migration scripts found.");
         return Ok(());
     }
-
     let migrations = find_all_migrations(pool)
         .await
         .map_err(MigrationError::Sql)?;
@@ -123,17 +129,22 @@ pub async fn migrate(pool: &PgPool, directory: &Path) -> Result<(), MigrationErr
             get_or_create_migration(&migrations, &file, migration_number)?;
         migration_number = current_migration_number;
         if migration.success {
+            trace!("Migration file {} was already applied", get_migration_script_name(&file));
             continue;
         }
+        trace!("Processing migration file: {}", get_migration_script_name(&file));
         let content = fs::read_to_string(file.path()).map_err(MigrationError::Io)?;
         match execute_sql_script(pool, content).await {
             Ok(_) => {
                 migration.success = true;
+                info!("{} finished.", get_migration_script_name(&file));
                 if let Err(error) = migration.save(pool).await {
+                    debug!("{} could not be saved in DB", get_migration_script_name(&file));
                     return Err(MigrationError::Sql(error));
                 }
             }
             Err(error) => {
+                info!("{} failed. {:?}", get_migration_script_name(&file), error);
                 migration.success = false;
                 migration.message = Some(error.to_string());
                 if let Err(error) = migration.save(pool).await {
@@ -152,8 +163,12 @@ fn get_or_create_migration(
     migration_number: i64,
 ) -> Result<(Migration, i64), MigrationError> {
     match get_migration(migrations, file) {
-        Some(found_migration) => Ok((found_migration.clone(), found_migration.migration_number)),
+        Some(found_migration) => {
+            trace!("{} found in database", get_migration_script_name(file));
+            Ok((found_migration.clone(), found_migration.migration_number))
+        },
         None => {
+            trace!("{} not found in database", get_migration_script_name(file));
             let new_migration_number = migration_number + 1;
             let migration = MigrationBuilder::default()
                 .id(None)
@@ -163,6 +178,7 @@ fn get_or_create_migration(
                 .message(None)
                 .build()
                 .map_err(MigrationError::Builder)?;
+            trace!("Model for {} created", get_migration_script_name(file));
             Ok((migration, new_migration_number))
         }
     }
@@ -190,6 +206,7 @@ fn get_sql_files(directory: &Path) -> Result<Vec<DirEntry>, MigrationError> {
         .filter(|e| e.path().extension().and_then(|s| s.to_str()) == Some("sql"))
         .collect();
     sql_files.sort_by_key(|dir| dir.path());
+    debug!("Following migrations were found: {:?}", sql_files);
     Ok(sql_files)
 }
 
