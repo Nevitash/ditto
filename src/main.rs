@@ -2,9 +2,11 @@ use std::path::Path;
 
 use log::{debug, info, LevelFilter};
 use log4rs::{append::console::ConsoleAppender, config::{Appender, Logger, Root}, Config};
+use message_queue::client;
 
 mod datasource;
 mod migration;
+mod message_queue;
 extern crate derive_builder;
 
 #[tokio::main]
