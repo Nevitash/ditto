@@ -7,7 +7,16 @@
 	"service": "rust-app",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 	"features": {
-	}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"SonarSource.sonarlint-vscode",
+				"mohsen1.prettify-json"
+			]
+		}
+	},
+	
 
 	// Use 'mounts' to make the cargo cache persistent in a Docker Volume.
 	// "mounts": [
