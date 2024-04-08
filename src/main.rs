@@ -2,7 +2,7 @@ use std::path::Path;
 
 use log::{debug, info, LevelFilter};
 use log4rs::{append::console::ConsoleAppender, config::{Appender, Logger, Root}, Config};
-use message_queue::client;
+use message_queue::{admin, client};
 
 mod datasource;
 mod migration;
