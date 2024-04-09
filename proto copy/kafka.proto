@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package kafka;
+
+service KafkaService {
+  rpc CreateTopic(CreateTopicRequest) returns (CreateTopicResponse);
+}
+
+message CreateTopicRequest {
+  string broker_string = 1;
+  string group_id = 2;
+  string client_id = 3;
+  string topic = 4;
+}
+
+message CreateTopicResponse {
+  bool success = 1;
+  string error_message = 2;
+}
