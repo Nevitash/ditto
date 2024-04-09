@@ -10,3 +10,5 @@ RUN apt-get install -y nodejs
 # Verify that Node.js was installed
 RUN node --version
 RUN npm --version
+
+RUN apt-get install -y protobuf-compiler
