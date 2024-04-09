@@ -12,7 +12,9 @@
 		"vscode": {
 			"extensions": [
 				"SonarSource.sonarlint-vscode",
-				"mohsen1.prettify-json"
+				"mohsen1.prettify-json",
+				"jeppeandersen.vscode-kafka",
+				"zxh404.vscode-proto3"
 			]
 		}
 	},

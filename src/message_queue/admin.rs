@@ -1,20 +1,44 @@
-use rdkafka::{client::Client, ClientConfig};
+use derive_builder::Builder;
+use log::error;
 
-async fn connect(client_id:&str, brokers: &str){
-    let mut config = ClientConfig::new();
-    config.set(KafkaConfigProperty::BOOTSTRAP_SERVERS, brokers);
-    config.set(KafkaConfigProperty::CLIENT_ID, client_id);
-    let client = Client::new(&config)?;
+use crate::grpc::{self, kafka::KafkaGrpcError};
+
+#[derive(Debug)]
+pub enum AdminOperationError {
+    Connection(String),
+    Operation(String),
+    Config(KafkaConfigBuilderError),
 }
 
-#[non_exhaustive]
-pub struct KafkaConfigProperty;
-impl KafkaConfigProperty {
-    pub const BOOTSTRAP_SERVERS: &str = "bootstrap.servers";
-    pub const CLIENT_ID: &str = "client.id";
-    pub const MESSAGE_TIMEOUT_MS: &str = "message.timeout.ms";
-    pub const ENABLE_AUTO_COMMIT: &str = "enable.auto.commit";
-    pub const AUTO_OFFSET_COMMIT: &str = "auto.offset.reset";
-    pub const GROUP_ID: &str = "group.id";
-    pub const MAX_POLL_RECORDS: &str = "max.poll.records";
+pub async fn create_topic(topic: &str) -> Result<(), AdminOperationError> {
+    let config = get_kafka_config()?;
+    match grpc::kafka::create_topic(&config.broker_string,&config.group_id,&config.client_id,topic,).await {
+        Ok(_) => Ok(()),
+        Err(_) => {
+            error!("Could not create topic {}", topic);
+            Err(AdminOperationError::Operation(format!("Could not create topic {}", topic)))
+        }
+    }
+}
+
+fn get_kafka_config() -> Result<KafkaConfig, AdminOperationError> {
+    match KafkaConfigBuilder::default()
+        .broker_string("kafka:9092,kafka2:9092".into())
+        .client_id("admin".into())
+        .group_id("ditto".into())
+        .build()
+    {
+        Ok(config) => Ok(config),
+        Err(error) => {
+            error!("Could not read config for kafka grpc service!");
+            Err(AdminOperationError::Config(error))
+        }
+    }
+}
+
+#[derive(Debug, Builder)]
+struct KafkaConfig {
+    broker_string: String,
+    client_id: String,
+    group_id: String,
 }

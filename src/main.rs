@@ -7,12 +7,14 @@ use message_queue::{admin, client};
 mod datasource;
 mod migration;
 mod message_queue;
+mod grpc;
 extern crate derive_builder;
 
 #[tokio::main]
 async fn main() {
     init_logging().await;
     db_migration().await;
+    let _ = admin::create_topic("ditto_topic_test_1").await;
 }
 
 async fn init_logging() {
