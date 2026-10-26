@@ -1,4 +1,4 @@
-﻿# Ditto _(ditto)_
+# Ditto _(ditto)_
 
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
@@ -23,25 +23,25 @@ Distributed architectures require robust, persistent queue management and event 
 
 Requires Rust 1.75+ and Cargo:
 
-`ash
+```bash
 git clone https://github.com/Nevitash/ditto.git
 cd ditto
 cargo build
-`
+```
 
 ## Usage
 
 Run database migrations and launch the broker daemon:
 
-`ash
+```bash
 cargo run
-`
+```
 
 Run test suite:
 
-`ash
+```bash
 cargo test
-`
+```
 
 ## Maintainers
 
